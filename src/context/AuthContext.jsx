@@ -1,0 +1,112 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { 
+  onAuthStateChanged, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword,
+  signOut 
+} from 'firebase/auth';
+import { auth, db } from '../config/firebase';
+import { doc, getDoc, setDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
+
+const AuthContext = createContext();
+
+export const useAuth = () => useContext(AuthContext);
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const updateProfile = async (data) => {
+    if (!user) return;
+    try {
+      const docRef = doc(db, 'users', user.uid);
+      await setDoc(docRef, data, { merge: true });
+      return true;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    let unsubscribeProfile = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        setLoading(true);
+        setUser(firebaseUser);
+        const token = await firebaseUser.getIdToken();
+        localStorage.setItem('auth_token', token);
+
+        // Listener en tiempo real para el perfil
+        const docRef = doc(db, 'users', firebaseUser.uid);
+        unsubscribeProfile = onSnapshot(docRef, (docSnap) => {
+          if (docSnap.exists()) {
+            setProfile(docSnap.data());
+          } else {
+            setProfile(null);
+          }
+          setLoading(false);
+        }, (err) => {
+          console.warn("No se pudo obtener el perfil de Firestore (posible falta de permisos o no existe el doc):", err.message);
+          setProfile(null);
+          setLoading(false);
+        });
+      } else {
+        setUser(null);
+        setProfile(null);
+        localStorage.removeItem('auth_token');
+        if (unsubscribeProfile) {
+          unsubscribeProfile();
+          unsubscribeProfile = null;
+        }
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeProfile) unsubscribeProfile();
+    };
+  }, []);
+
+  const login = (email, password) => signInWithEmailAndPassword(auth, email, password);
+  
+  const register = async (email, password, companyData) => {
+    const res = await createUserWithEmailAndPassword(auth, email, password);
+    const docRef = doc(db, 'users', res.user.uid);
+    await setDoc(docRef, {
+      email,
+      displayName: companyData.displayName || null,
+      provider: 'password',
+      status: 'pending',
+      role: 'usuario',
+      companyId: companyData.companyId || null,
+      requestedCompany: companyData.companyId ? null : companyData.companyName,
+      createdAt: serverTimestamp()
+    });
+    return res;
+  };
+
+  const logout = () => signOut(auth);
+
+  const value = {
+    user,
+    profile,
+    loading,
+    login,
+    register,
+    logout,
+    updateProfileData: updateProfile,
+    isAdmin: profile?.role === 'super_admin',
+    isCompanyAdmin: profile?.role === 'admin_empresa',
+    isActive: profile?.status === 'active'
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
+};

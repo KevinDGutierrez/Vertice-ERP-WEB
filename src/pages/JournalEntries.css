@@ -1,0 +1,413 @@
+.timeline-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding-bottom: 80px;
+}
+
+/* Spotlight Header */
+.spotlight-header {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  background: var(--vf-primary-gradient);
+  border-radius: 32px;
+  padding: 48px;
+  color: white;
+  margin-bottom: -32px; /* Overlap with filter bar */
+  box-shadow: 0 24px 48px rgba(99, 102, 241, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.spotlight-header::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.2), transparent 50%);
+  pointer-events: none;
+}
+
+.spotlight-art {
+  width: 96px;
+  height: 96px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.spotlight-text {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.spotlight-text h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin: 0 0 8px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.spotlight-text p {
+  font-size: 1.2rem;
+  font-weight: 500;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.spotlight-stats {
+  background: rgba(0,0,0,0.2);
+  backdrop-filter: blur(10px);
+  padding: 24px 32px;
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.1);
+  position: relative;
+  z-index: 1;
+}
+
+.s-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.s-stat span {
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+.s-stat strong {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* Floating Filter Bar */
+.floating-filter-bar {
+  display: flex;
+  align-items: center;
+  background: var(--vf-card);
+  border: 1px solid rgba(255,255,255,0.5);
+  border-radius: 999px;
+  padding: 12px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  margin: 0 auto 64px;
+  max-width: 800px;
+  position: relative;
+  z-index: 10;
+  backdrop-filter: blur(20px);
+}
+
+.f-group {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 24px;
+}
+
+.f-icon {
+  color: var(--vf-muted);
+}
+
+.f-group select, .f-group input {
+  width: 100%;
+  border: none !important;
+  background: transparent !important;
+  padding: 8px 0 !important;
+  font-weight: 700;
+  color: var(--vf-text) !important;
+  font-size: 1rem;
+  outline: none;
+}
+
+.f-divider {
+  width: 2px;
+  height: 32px;
+  background: var(--vf-line);
+}
+
+.f-btn {
+  background: var(--vf-text);
+  color: var(--vf-bg);
+  border: none;
+  border-radius: 999px;
+  padding: 16px 32px;
+  font-weight: 800;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.f-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+}
+
+/* Timeline */
+.timeline-wrapper {
+  position: relative;
+  padding-left: 24px; /* Space for spine */
+}
+
+.timeline-node {
+  display: flex;
+  gap: 40px;
+  position: relative;
+}
+
+/* The Spine */
+.timeline-spine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 48px;
+  flex-shrink: 0;
+}
+
+.timeline-dot {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  z-index: 2;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.timeline-dot.primary { background: var(--vf-primary-gradient); }
+.timeline-dot.warn { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+.timeline-dot.success { background: linear-gradient(135deg, #10b981, #34d399); }
+
+.timeline-line {
+  flex: 1;
+  width: 4px;
+  background: var(--vf-line);
+  margin-top: 8px;
+  margin-bottom: 8px;
+  border-radius: 2px;
+}
+
+/* Last item shouldn't have a line extending infinitely, but flex:1 handles it mostly. 
+   We can hide it on the last child */
+.timeline-node:last-child .timeline-line {
+  display: none;
+}
+.timeline-node:last-child {
+  padding-bottom: 24px; /* Space instead of line */
+}
+
+/* Content Card */
+.timeline-content-card {
+  flex: 1;
+  background: var(--vf-card);
+  border-radius: 32px;
+  border: 1px solid rgba(255,255,255,0.5);
+  box-shadow: var(--vf-shadow);
+  margin-bottom: 48px;
+  overflow: hidden;
+}
+
+.t-card-header {
+  padding: 24px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  background: var(--vf-card-2);
+  transition: background 0.2s;
+}
+
+.t-card-header:hover {
+  background: #fff;
+}
+
+.t-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.t-date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--vf-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.t-badge {
+  display: inline-flex;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.t-badge.diario { background: rgba(99, 102, 241, 0.1); color: var(--vf-accent); }
+.t-badge.apertura { background: rgba(16, 185, 129, 0.1); color: var(--vf-success); }
+.t-badge.ajuste { background: rgba(245, 158, 11, 0.1); color: var(--vf-warning); }
+
+.t-header-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.t-total {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--vf-text);
+}
+
+.t-chevron {
+  color: var(--vf-muted);
+}
+
+.t-desc {
+  padding: 24px 32px;
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--vf-text);
+  line-height: 1.6;
+}
+
+/* Flow Details */
+.t-details-flow {
+  border-top: 1px dashed var(--vf-line);
+}
+
+.flow-container {
+  padding: 32px;
+}
+
+.flow-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--vf-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.flow-icon {
+  color: var(--vf-line);
+}
+
+.flow-body {
+  display: flex;
+  gap: 32px;
+}
+
+.flow-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.flow-divider {
+  width: 2px;
+  background: var(--vf-line);
+  border-radius: 1px;
+}
+
+.flow-pill {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: var(--vf-bg);
+  border: 1px solid var(--vf-line);
+}
+
+.flow-pill.out { border-left: 4px solid var(--vf-muted); }
+.flow-pill.in { border-left: 4px solid var(--vf-text); }
+
+.pill-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.p-code {
+  font-family: 'Outfit', monospace;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--vf-accent);
+}
+
+.p-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--vf-text);
+}
+
+.p-amt {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--vf-text);
+}
+
+/* States */
+.timeline-loading, .timeline-error, .timeline-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px;
+  text-align: center;
+  background: var(--vf-card);
+  border-radius: 32px;
+  box-shadow: var(--vf-shadow);
+  border: 1px solid rgba(255,255,255,0.5);
+  margin-top: 32px;
+}
+
+.timeline-empty h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 24px 0 8px;
+}
+
+.timeline-error { color: var(--vf-danger); }
+
+@media (max-width: 900px) {
+  .spotlight-header { flex-direction: column; text-align: center; padding: 32px; }
+  .floating-filter-bar { flex-direction: column; border-radius: 24px; padding: 24px; gap: 16px; max-width: 100%; margin-top: 32px; }
+  .f-divider { width: 100%; height: 1px; }
+  .f-group { width: 100%; padding: 0; }
+  .f-btn { width: 100%; justify-content: center; }
+  .timeline-node { gap: 16px; }
+  .flow-body { flex-direction: column; gap: 16px; }
+  .flow-divider { height: 2px; width: 100%; }
+  .t-card-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .t-header-right { width: 100%; justify-content: space-between; }
+}
