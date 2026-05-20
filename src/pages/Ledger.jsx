@@ -14,8 +14,10 @@ const formatQ = (val) => `Q${(val || 0).toLocaleString(undefined, { minimumFract
 const Ledger = () => {
   const [accounts, setAccounts] = useState([]);
   const [accountId, setAccountId] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const [startDate, setStartDate] = useState(firstDay.toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(today.toISOString().split('T')[0]);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -40,12 +42,26 @@ const Ledger = () => {
     setLoading(true);
     setError(null);
     try {
-      const params = {};
+      const params = { accountId };
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
 
-      const res = await api.get(`/ledger/${accountId}`, { params });
-      setData(res.data);
+      const res = await api.get('/entries/ledger', { params });
+      
+      // Map backend response to component's expected shape
+      const movements = res.data.movements || [];
+      const totalDebit = movements.reduce((s, m) => s + (m.debit || 0), 0);
+      const totalCredit = movements.reduce((s, m) => s + (m.credit || 0), 0);
+      const finalBalance = movements.length > 0 ? movements[movements.length - 1].balance : 0;
+      
+      setData({
+        account: res.data.account,
+        entries: movements,
+        initialBalance: 0,
+        finalBalance,
+        totalDebit,
+        totalCredit
+      });
     } catch (err) {
       setError(err.response?.data?.message || 'Error al cargar el libro mayor');
       setData(null);
@@ -225,7 +241,7 @@ const Ledger = () => {
                       </div>
                       <div className="rc-footer">
                         <span>Saldo resultante</span>
-                        <strong>{formatQ(entry.balanceAfter)}</strong>
+                        <strong>{formatQ(entry.balance)}</strong>
                       </div>
                     </div>
                   ))}

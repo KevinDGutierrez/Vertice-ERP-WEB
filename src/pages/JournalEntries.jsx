@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Layout from '../components/layout/Layout';
 import api from '../api/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Calendar, Search, Filter, AlertCircle, FileText, 
-  ChevronRight, ArrowRightLeft, Banknote, History
+  ChevronRight, ArrowRightLeft, Banknote, History, Download
 } from 'lucide-react';
+import html2pdf from 'html2pdf.js';
 import './JournalEntries.css';
 
 const formatQ = (val) => `Q${(val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -117,8 +118,10 @@ const JournalEntries = () => {
   const [error, setError] = useState(null);
   
   // Filters
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const today = new Date();
+  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+  const [startDate, setStartDate] = useState(firstDay.toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(today.toISOString().split('T')[0]);
   const [type, setType] = useState('');
 
   const fetchEntries = async () => {
@@ -149,6 +152,71 @@ const JournalEntries = () => {
   const handleFilter = (e) => {
     e.preventDefault();
     fetchEntries();
+  };
+
+  const handleExportPDF = () => {
+    // Build a formal document for PDF
+    const totalDebe = entries.reduce((s, e) => s + (e.details || []).reduce((ss, d) => ss + (Number(d.debit) || 0), 0), 0);
+    const totalHaber = entries.reduce((s, e) => s + (e.details || []).reduce((ss, d) => ss + (Number(d.credit) || 0), 0), 0);
+
+    const rows = entries.map(entry => {
+      const details = entry.details || [];
+      return details.map((d, i) => `
+        <tr>
+          ${i === 0 ? `<td rowspan="${details.length}" style="vertical-align:top;font-weight:700;">${new Date(entry.date + 'T12:00:00').toLocaleDateString('es-GT')}</td>` : ''}
+          ${i === 0 ? `<td rowspan="${details.length}" style="vertical-align:top;">${entry.entryNumber || '-'}</td>` : ''}
+          <td>${d.accountCode || ''}</td>
+          <td>${d.accountName || ''}</td>
+          <td style="text-align:right;">${Number(d.debit) > 0 ? formatQ(d.debit) : ''}</td>
+          <td style="text-align:right;">${Number(d.credit) > 0 ? formatQ(d.credit) : ''}</td>
+        </tr>
+      `).join('');
+    }).join('');
+
+    const html = `
+      <div style="font-family:'Inter',sans-serif;padding:24px;color:#1e293b;">
+        <div style="text-align:center;margin-bottom:24px;">
+          <h2 style="margin:0;font-size:1.4rem;">Vértice Fashion</h2>
+          <p style="margin:4px 0;color:#64748b;font-size:0.85rem;">NIT: 1234567-8</p>
+          <h1 style="margin:12px 0 4px;font-size:1.6rem;">Libro Diario</h1>
+          <p style="color:#64748b;font-size:0.85rem;">Del ${new Date(startDate).toLocaleDateString('es-GT')} al ${new Date(endDate).toLocaleDateString('es-GT')}</p>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+          <thead>
+            <tr style="background:#f1f5f9;">
+              <th style="padding:10px 8px;text-align:left;border-bottom:2px solid #e2e8f0;">Fecha</th>
+              <th style="padding:10px 8px;text-align:left;border-bottom:2px solid #e2e8f0;">P. No.</th>
+              <th style="padding:10px 8px;text-align:left;border-bottom:2px solid #e2e8f0;">Código</th>
+              <th style="padding:10px 8px;text-align:left;border-bottom:2px solid #e2e8f0;">Cuenta</th>
+              <th style="padding:10px 8px;text-align:right;border-bottom:2px solid #e2e8f0;">Debe</th>
+              <th style="padding:10px 8px;text-align:right;border-bottom:2px solid #e2e8f0;">Haber</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+          <tfoot>
+            <tr style="border-top:2px solid #1e293b;font-weight:800;">
+              <td colspan="4" style="padding:10px 8px;">Sumas Iguales</td>
+              <td style="padding:10px 8px;text-align:right;">${formatQ(totalDebe)}</td>
+              <td style="padding:10px 8px;text-align:right;">${formatQ(totalHaber)}</td>
+            </tr>
+          </tfoot>
+        </table>
+        <p style="text-align:center;margin-top:24px;color:#94a3b8;font-size:0.75rem;">Generado: ${new Date().toLocaleString('es-GT')}</p>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.innerHTML = html;
+
+    html2pdf().set({
+      margin: 0.4,
+      filename: `Libro_Diario_${startDate}_a_${endDate}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    }).from(container).save();
   };
 
   return (
@@ -196,6 +264,11 @@ const JournalEntries = () => {
           <button type="submit" className="f-btn">
             <Filter size={18} /> Filtrar
           </button>
+          {entries.length > 0 && (
+            <button type="button" className="f-btn export" onClick={handleExportPDF}>
+              <Download size={18} /> Exportar PDF
+            </button>
+          )}
         </form>
 
         {loading ? (
