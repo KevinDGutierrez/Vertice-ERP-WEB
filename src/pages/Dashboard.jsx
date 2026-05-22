@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import api from '../api/client';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   TrendingUp, TrendingDown, DollarSign, Activity, 
-  PlusCircle, Zap, Eye, Calendar, ArrowRight, Layers, Trash2
+  PlusCircle, Zap, Eye, Calendar, ArrowRight, Layers, Trash2,
+  AlertTriangle, ShieldAlert, X
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -19,6 +20,9 @@ const Dashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetConfirmText, setResetConfirmText] = useState('');
+  const [resetting, setResetting] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -37,16 +41,14 @@ const Dashboard = () => {
   }, []);
 
   const handleResetERP = async () => {
-    const confirmText = "⚠️ ¡ADVERTENCIA CRÍTICA!\n\nEstás a punto de vaciar todo el ERP. Se borrarán TODAS las partidas contables y los saldos de todas las cuentas volverán a Q0.00.\n\nEsta acción NO se puede deshacer.\n\n¿Estás completamente seguro de que deseas vaciar el ERP?";
-    if (window.confirm(confirmText)) {
-      try {
-        setLoading(true);
-        await api.post('/companies/reset');
-        window.location.reload();
-      } catch (err) {
-        setError(err.response?.data?.message || 'Error al vaciar el ERP');
-        setLoading(false);
-      }
+    try {
+      setResetting(true);
+      await api.post('/companies/reset');
+      window.location.reload();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Error al vaciar el ERP');
+      setResetting(false);
+      setShowResetModal(false);
     }
   };
 
@@ -72,7 +74,7 @@ const Dashboard = () => {
             <Eye size={20} />
             <span>Ver Mayor</span>
           </button>
-          <button className="quick-action-btn danger" onClick={handleResetERP}>
+          <button className="quick-action-btn danger" onClick={() => setShowResetModal(true)}>
             <Trash2 size={20} />
             <span>Vaciar ERP</span>
           </button>
@@ -232,6 +234,87 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Reset ERP Confirmation Modal */}
+      <AnimatePresence>
+        {showResetModal && (
+          <motion.div
+            className="reset-modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => !resetting && setShowResetModal(false)}
+          >
+            <motion.div
+              className="reset-modal"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button className="reset-modal-close" onClick={() => !resetting && setShowResetModal(false)}>
+                <X size={20} />
+              </button>
+
+              <div className="reset-modal-icon">
+                <ShieldAlert size={48} />
+              </div>
+
+              <h2>Vaciar ERP</h2>
+              <p className="reset-modal-subtitle">Esta acción es <strong>permanente e irreversible</strong>. Se eliminarán:</p>
+
+              <div className="reset-modal-consequences">
+                <div className="consequence-item">
+                  <AlertTriangle size={16} />
+                  <span>Todas las partidas contables registradas</span>
+                </div>
+                <div className="consequence-item">
+                  <AlertTriangle size={16} />
+                  <span>Todos los detalles y movimientos de cada partida</span>
+                </div>
+                <div className="consequence-item">
+                  <AlertTriangle size={16} />
+                  <span>Los saldos de todas las cuentas volverán a Q0.00</span>
+                </div>
+              </div>
+
+              <div className="reset-modal-confirm-input">
+                <label>Escribe <strong>VACIAR</strong> para confirmar:</label>
+                <input
+                  type="text"
+                  value={resetConfirmText}
+                  onChange={(e) => setResetConfirmText(e.target.value)}
+                  placeholder="Escribe VACIAR aquí"
+                  disabled={resetting}
+                  autoFocus
+                />
+              </div>
+
+              <div className="reset-modal-actions">
+                <button
+                  className="reset-btn cancel"
+                  onClick={() => { setShowResetModal(false); setResetConfirmText(''); }}
+                  disabled={resetting}
+                >
+                  Cancelar
+                </button>
+                <button
+                  className="reset-btn confirm"
+                  onClick={handleResetERP}
+                  disabled={resetConfirmText !== 'VACIAR' || resetting}
+                >
+                  {resetting ? (
+                    <><div className="spin-loader-sm" /> Vaciando...</>
+                  ) : (
+                    <><Trash2 size={16} /> Vaciar todo</>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Layout>
   );
 };
