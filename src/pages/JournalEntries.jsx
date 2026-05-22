@@ -261,14 +261,16 @@ const JournalEntries = () => {
             <Calendar size={18} className="f-icon" />
             <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
           </div>
-          <button type="submit" className="f-btn">
-            <Filter size={18} /> Filtrar
-          </button>
-          {entries.length > 0 && (
-            <button type="button" className="f-btn export" onClick={handleExportPDF}>
-              <Download size={18} /> Exportar PDF
+          <div className="f-actions">
+            <button type="submit" className="f-btn">
+              <Filter size={18} /> Filtrar
             </button>
-          )}
+            {entries.length > 0 && (
+              <button type="button" className="f-btn export" onClick={handleExportPDF}>
+                <Download size={18} /> Exportar PDF
+              </button>
+            )}
+          </div>
         </form>
 
         {loading ? (

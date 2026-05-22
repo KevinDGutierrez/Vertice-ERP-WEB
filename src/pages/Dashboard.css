@@ -39,13 +39,25 @@
 .quick-action-btn.secondary {
   background: var(--vf-card);
   color: var(--vf-text);
-  border: 2px solid var(--vf-line);
+  border: 1px solid var(--vf-line);
+}
+
+.quick-action-btn.danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .quick-action-btn.secondary:hover {
-  border-color: var(--vf-accent);
   color: var(--vf-accent);
   background: #fff;
+}
+
+.quick-action-btn.danger:hover {
+  transform: translateY(-2px);
+  background: #ef4444;
+  color: white;
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.35);
 }
 
 /* Loading & Empty States */

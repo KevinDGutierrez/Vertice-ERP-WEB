@@ -4,7 +4,7 @@ import api from '../api/client';
 import { motion } from 'framer-motion';
 import { 
   TrendingUp, TrendingDown, DollarSign, Activity, 
-  PlusCircle, Zap, Eye, Calendar, ArrowRight, Layers
+  PlusCircle, Zap, Eye, Calendar, ArrowRight, Layers, Trash2
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -36,6 +36,20 @@ const Dashboard = () => {
     fetchDashboard();
   }, []);
 
+  const handleResetERP = async () => {
+    const confirmText = "⚠️ ¡ADVERTENCIA CRÍTICA!\n\nEstás a punto de vaciar todo el ERP. Se borrarán TODAS las partidas contables y los saldos de todas las cuentas volverán a Q0.00.\n\nEsta acción NO se puede deshacer.\n\n¿Estás completamente seguro de que deseas vaciar el ERP?";
+    if (window.confirm(confirmText)) {
+      try {
+        setLoading(true);
+        await api.post('/companies/reset');
+        window.location.reload();
+      } catch (err) {
+        setError(err.response?.data?.message || 'Error al vaciar el ERP');
+        setLoading(false);
+      }
+    }
+  };
+
   const hasMovements = data && (data.totalAssets > 0 || data.totalLiabilities > 0 || data.monthlySales > 0 || data.monthlyExpenses > 0 || (data.latestEntries && data.latestEntries.length > 0));
 
   const pieData = data ? [
@@ -57,6 +71,10 @@ const Dashboard = () => {
           <button className="quick-action-btn secondary" onClick={() => navigate('/ledger')}>
             <Eye size={20} />
             <span>Ver Mayor</span>
+          </button>
+          <button className="quick-action-btn danger" onClick={handleResetERP}>
+            <Trash2 size={20} />
+            <span>Vaciar ERP</span>
           </button>
         </div>
 

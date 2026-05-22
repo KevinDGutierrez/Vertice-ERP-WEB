@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 *.env
+*hosting.ZGlzdA.cache
+*.firebase
+*.cache
